@@ -1,8 +1,10 @@
 {
-  "appid": "wx407e16f8b65ec101",
+  "description": "象棋小程序项目配置文件",
+  "appid": "wxd55bc356dfdc9ed9",
   "projectname": "xianqi-mini-program",
   "miniprogramRoot": "./",
   "compileType": "miniprogram",
+  "libVersion": "3.9.0",
   "setting": {
     "urlCheck": true,
     "es6": true,
@@ -13,7 +15,37 @@
     "lazyloadPlaceholderEnable": false,
     "preloadBackgroundData": false,
     "autoAudits": false,
-    "uglifyFileName": false
+    "uglifyFileName": false,
+    "newFeature": true,
+    "nodeModules": false,
+    "uploadWithSourceMap": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "showES6CompileOption": false,
+    "minifyWXSS": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
-  "condition": {}
+  "packOptions": {
+    "ignore": []
+  },
+  "condition": {
+    "search": {
+      "list": []
+    },
+    "conversation": {
+      "list": []
+    },
+    "game": {
+      "currentL": -1,
+      "list": []
+    },
+    "miniprogram": {
+      "list": []
+    }
+  }
 }

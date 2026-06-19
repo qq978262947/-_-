@@ -153,27 +153,6 @@ npm run upload:wechat
 
 `wechat.config.json` 和上传密钥不会提交到 Git。
 
-## 微信小游戏发布
-
-仓库内置 `wechat-minigame` 子工程，用于小游戏 AppID 发布。小游戏不支持普通小程序的 `web-view`，因此该目录提供独立的 Canvas 原生版本，当前支持：
-
-- 自适应棋盘，适配不同手机屏幕。
-- 本地双人练习。
-- 基础象棋走子规则、选子提示、吃子和轮换行棋。
-- 关于与开源许可说明。
-
-使用微信开发者工具发布：
-
-```bash
-/Applications/wechatwebdevtools.app/Contents/MacOS/cli upload \
-  --project ./wechat-minigame \
-  --appid wx407e16f8b65ec101 \
-  --version 1.0.1 \
-  --desc "象棋小游戏 Canvas 版，支持棋盘适配和本地双人练习"
-```
-
-上传后需要到微信公众平台提交审核，小游戏类目、隐私合规、名称头像和版本说明需在平台后台补齐。
-
 ## 开源和许可
 
 本项目以 GPL-3.0-only 开源发布。
