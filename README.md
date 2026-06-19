@@ -111,6 +111,19 @@ http://服务器地址:5178
 
 项目内置 `render.yaml`，推送到 GitHub 后可以在 Render 选择 Blueprint 部署。部署完成后访问 Render 分配的 HTTPS 域名即可。
 
+### Zeabur
+
+如果 Render 要求绑定付款方式，可以改用 Zeabur Free Plan。Zeabur 支持 GitHub 集成，并会自动识别项目根目录的 `Dockerfile` 进行部署。
+
+部署步骤：
+
+1. 打开 Zeabur Dashboard。
+2. 使用 GitHub 登录并授权仓库 `qq978262947/-_-`。
+3. 创建 Project，选择 Deploy New Service。
+4. 选择 GitHub 仓库 `qq978262947/-_-`。
+5. 确认使用 Dockerfile 部署。
+6. 部署完成后绑定或复制 Zeabur 分配的访问域名。
+
 ## 开源和许可
 
 本项目以 GPL-3.0-only 开源发布。
