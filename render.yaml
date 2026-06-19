@@ -1,8 +1,8 @@
 services:
   - type: web
     name: xianqi-mini-program
-    env: docker
-    plan: starter
+    runtime: docker
+    plan: free
     autoDeploy: true
     healthCheckPath: /api/health
     envVars:
