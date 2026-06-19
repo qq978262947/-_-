@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": false,
   "license": "GPL-3.0-only",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js && node --check app.js"

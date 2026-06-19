@@ -102,6 +102,10 @@ http://服务器地址:5178
 
 如果平台提供域名绑定，把外部 80/443 流量转发到容器的 `5178` 端口即可。
 
+### Render
+
+项目内置 `render.yaml`，推送到 GitHub 后可以在 Render 选择 Blueprint 部署。部署完成后访问 Render 分配的 HTTPS 域名即可。
+
 ## 开源和许可
 
 本项目以 GPL-3.0-only 开源发布。

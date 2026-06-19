@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: xianqi-mini-program
+    env: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 5178
+      - key: NODE_ENV
+        value: production
+      - key: PIKAFISH_THREADS
+        value: 4
+      - key: PIKAFISH_HASH_MB
+        value: 512
