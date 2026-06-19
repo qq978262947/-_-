@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim AS pikafish-builder
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates git build-essential make \
+  && apt-get install -y --no-install-recommends ca-certificates curl git build-essential make \
   && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth 1 https://github.com/official-pikafish/Pikafish.git /tmp/pikafish \
