@@ -1015,6 +1015,6 @@ const server = http.createServer((req, res) => {
   serveStatic(req, res, pathname);
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`象棋小程序已启动：http://localhost:${PORT}`);
 });

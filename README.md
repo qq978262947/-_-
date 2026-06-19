@@ -4,6 +4,8 @@
 
 开源仓库地址：https://github.com/qq978262947/-_-
 
+正式访问地址：https://xianqi-mini-program.onrender.com
+
 ## 功能
 
 - 人机对战：可选择执红或执黑，AI 难度会记住上次选择。

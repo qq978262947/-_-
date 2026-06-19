@@ -6,8 +6,6 @@ services:
     autoDeploy: true
     healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: 5178
       - key: NODE_ENV
         value: production
       - key: PIKAFISH_THREADS
