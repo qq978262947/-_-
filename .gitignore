@@ -8,3 +8,7 @@ yarn-error.log*
 *.log
 dist/
 coverage/
+wechat.config.json
+private.key
+*.private.key
+wechat-miniprogram/project.private.config.json

@@ -1,0 +1,11 @@
+.donate-card {
+  padding: 40rpx;
+  text-align: center;
+}
+
+.donate-image {
+  width: 100%;
+  margin-top: 30rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 20rpx 50rpx rgba(34, 22, 14, 0.16);
+}

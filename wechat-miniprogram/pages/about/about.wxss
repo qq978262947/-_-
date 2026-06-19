@@ -1,0 +1,27 @@
+.about-card {
+  padding: 40rpx;
+}
+
+.section-title {
+  margin: 32rpx 0 12rpx;
+  color: #6e321e;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.link {
+  padding: 22rpx;
+  border-radius: 18rpx;
+  color: #8b1e17;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 25rpx;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-top: 36rpx;
+}

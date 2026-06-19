@@ -1,0 +1,14 @@
+<view class="web-page">
+  <web-view src="{{serviceUrl}}" binderror="handleWebError" bindload="handleWebLoad"></web-view>
+</view>
+
+<view wx:if="{{showFallback}}" class="fallback page">
+  <view class="glass-card fallback-card">
+    <view class="title">象棋小程序</view>
+    <view class="text">
+      当前页面需要在微信公众平台配置业务域名后才能打开。请将正式 HTTPS 域名加入小程序业务域名，重新上传审核即可。
+    </view>
+    <view class="button" bindtap="copyUrl">复制访问地址</view>
+    <navigator class="button secondary" url="/pages/about/about">关于我们</navigator>
+  </view>
+</view>

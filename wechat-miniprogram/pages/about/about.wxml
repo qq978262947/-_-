@@ -1,0 +1,22 @@
+<view class="page about-page">
+  <view class="glass-card about-card">
+    <view class="title">关于我们</view>
+    <view class="text">
+      本产品使用了 Pikafish 象棋引擎。
+    </view>
+    <view class="text">
+      Pikafish 是一个开源中国象棋 UCI 引擎，基于 GNU General Public License version 3（GPL v3）授权发布。
+    </view>
+    <view class="section-title">Pikafish 项目地址</view>
+    <view class="link" bindtap="copyPikafishUrl">https://github.com/official-pikafish/Pikafish</view>
+    <view class="text">
+      Pikafish 的版权归其原作者及贡献者所有。本产品遵守 GPL v3 的相关要求。
+    </view>
+    <view class="section-title">本产品开源代码地址</view>
+    <view class="link" bindtap="copySourceUrl">https://github.com/qq978262947/-_-</view>
+    <view class="button-row">
+      <navigator class="button secondary" url="/pages/donate/donate">捐赠开发者</navigator>
+      <view class="button" bindtap="copyServiceUrl">复制正式地址</view>
+    </view>
+  </view>
+</view>

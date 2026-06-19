@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/about/about",
+    "pages/donate/donate"
+  ],
+  "window": {
+    "navigationBarTitleText": "象棋小程序",
+    "navigationBarBackgroundColor": "#2f2217",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f7efe2"
+  },
+  "sitemapLocation": "sitemap.json"
+}

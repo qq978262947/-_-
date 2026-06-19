@@ -1,0 +1,7 @@
+<view class="page donate-page">
+  <view class="glass-card donate-card">
+    <view class="title">捐赠开发者</view>
+    <view class="text">感谢支持象棋小程序继续迭代。</view>
+    <image class="donate-image" src="/assets/donate-wechat.jpg" mode="widthFix" show-menu-by-longpress="true"></image>
+  </view>
+</view>

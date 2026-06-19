@@ -1147,6 +1147,8 @@
     resizeCanvas();
     updateUi();
     window.addEventListener("resize", resizeCanvas);
+    window.visualViewport?.addEventListener("resize", resizeCanvas);
+    window.visualViewport?.addEventListener("scroll", resizeCanvas);
     window.setInterval(() => {
       if (shouldShowClockStatus() || (game.mode === "online" && game.online?.roomCode)) {
         updateUi();
@@ -1433,9 +1435,25 @@
     if (els.gameScreen.classList.contains("hidden")) {
       return;
     }
-    const rect = els.canvas.getBoundingClientRect();
-    const cssWidth = Math.max(300, rect.width || els.canvasWrap.clientWidth || 640);
-    const cssHeight = rect.height || cssWidth * 10 / 9;
+    const wrapStyle = window.getComputedStyle(els.canvasWrap);
+    const panelStyle = window.getComputedStyle(els.canvasWrap.parentElement);
+    const toPx = (value) => Number.parseFloat(value) || 0;
+    const chromeX = toPx(wrapStyle.paddingLeft) + toPx(wrapStyle.paddingRight) + toPx(wrapStyle.borderLeftWidth) + toPx(wrapStyle.borderRightWidth);
+    const chromeY = toPx(wrapStyle.paddingTop) + toPx(wrapStyle.paddingBottom) + toPx(wrapStyle.borderTopWidth) + toPx(wrapStyle.borderBottomWidth);
+    const panelChromeX = toPx(panelStyle.paddingLeft) + toPx(panelStyle.paddingRight);
+    const minCanvasWidth = 120;
+    const panelWidth = els.canvasWrap.parentElement.clientWidth || window.innerWidth;
+    const maxOuterWidth = Math.max(minCanvasWidth + chromeX, Math.min(780, panelWidth - panelChromeX));
+    const viewportHeight = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 720;
+    const wrapTop = els.canvasWrap.getBoundingClientRect().top;
+    const availableOuterHeight = Math.max(minCanvasWidth * 10 / 9 + chromeY, viewportHeight - Math.max(0, wrapTop) - 8);
+    const maxOuterWidthByHeight = Math.max(minCanvasWidth + chromeX, (availableOuterHeight - chromeY) * 9 / 10 + chromeX);
+    const outerWidth = Math.max(minCanvasWidth + chromeX, Math.min(maxOuterWidth, maxOuterWidthByHeight));
+    const cssWidth = Math.max(minCanvasWidth, outerWidth - chromeX);
+    const cssHeight = cssWidth * 10 / 9;
+    els.canvasWrap.style.setProperty("--board-outer-size", `${outerWidth}px`);
+    els.canvasWrap.style.setProperty("--board-canvas-width", `${cssWidth}px`);
+    els.canvasWrap.style.setProperty("--board-canvas-height", `${cssHeight}px`);
     const dpr = window.devicePixelRatio || 1;
     els.canvas.width = Math.round(cssWidth * dpr);
     els.canvas.height = Math.round(cssHeight * dpr);

@@ -124,6 +124,35 @@ http://服务器地址:5178
 5. 确认使用 Dockerfile 部署。
 6. 部署完成后绑定或复制 Zeabur 分配的访问域名。
 
+## 微信小程序发布
+
+仓库内置 `wechat-miniprogram` 子工程。微信小程序端使用原生小程序页面承载正式 H5 地址，并提供原生“关于我们”和“捐赠开发者”页面。
+
+发布前需要先在微信公众平台完成：
+
+1. 注册并认证小程序，获取真实 AppID。
+2. 在“开发管理 / 开发设置”里下载代码上传密钥。
+3. 在“开发管理 / 开发设置 / 业务域名”里配置正式 HTTPS 域名，例如 `https://xianqi-mini-program.onrender.com`。`web-view` 必须使用已备案并通过微信校验的业务域名。
+4. 将 `wechat-miniprogram/project.config.json` 里的 `appid` 从 `touristappid` 改成真实 AppID，或复制 `wechat-miniprogram/project.private.config.json.example` 为本地私有配置。
+
+使用微信开发者工具发布：
+
+1. 打开微信开发者工具。
+2. 导入目录 `wechat-miniprogram`。
+3. 填写真实 AppID。
+4. 预览确认首页、关于我们、捐赠开发者页面正常。
+5. 点击“上传”，再到微信公众平台提交审核。
+
+使用命令行上传：
+
+```bash
+cp wechat.config.example.json wechat.config.json
+npm install miniprogram-ci --save-dev
+npm run upload:wechat
+```
+
+`wechat.config.json` 和上传密钥不会提交到 Git。
+
 ## 开源和许可
 
 本项目以 GPL-3.0-only 开源发布。

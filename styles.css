@@ -253,7 +253,7 @@ input:focus-visible {
 }
 
 .canvas-wrap {
-  width: min(780px, 100%);
+  width: min(var(--board-outer-size, 780px), 100%);
   margin: 0 auto;
   border: 1px solid rgba(123, 91, 49, 0.28);
   border-radius: var(--radius);
@@ -271,7 +271,9 @@ input:focus-visible {
 
 #boardCanvas {
   display: block;
-  width: 100%;
+  width: var(--board-canvas-width, 100%);
+  height: var(--board-canvas-height, auto);
+  max-width: 100%;
   aspect-ratio: 9 / 10;
   border-radius: 6px;
   opacity: 0.97;
@@ -1115,6 +1117,7 @@ input {
 
   .canvas-wrap {
     padding: 5px;
+    width: min(var(--board-outer-size, 100%), 100%);
   }
 
   .guide-step-controls {
