@@ -89,6 +89,8 @@ curl http://localhost:5178/api/health
 
 ### Docker
 
+Docker 镜像会在构建阶段从官方 Pikafish 源码编译 Linux 版引擎，并复用仓库内的 `pikafish.nnue`，适合 Render 等 Linux 容器平台。
+
 ```bash
 docker build -t xianqi-mini-program .
 docker run -p 5178:5178 xianqi-mini-program
