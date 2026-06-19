@@ -1,0 +1,10 @@
+GPL-3.0-only
+
+This project is released under the GNU General Public License version 3.
+
+See the full license text at:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+This project uses the Pikafish Chinese chess engine. Pikafish is released
+under GPL v3 by its original authors and contributors:
+https://github.com/official-pikafish/Pikafish
