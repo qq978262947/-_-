@@ -716,6 +716,14 @@ function runPikafish(options) {
 async function handleApi(req, res, pathname, query) {
   cleanupRooms();
 
+  if (req.method === "GET" && pathname === "/healthz") {
+    sendJson(res, 200, {
+      ok: true,
+      rooms: ROOMS.size
+    });
+    return;
+  }
+
   if (req.method === "GET" && pathname === "/api/health") {
     const probe = await runPikafish({
       board: createInitialBoard(),
@@ -992,7 +1000,7 @@ function serveStatic(req, res, pathname) {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = decodeURIComponent(url.pathname);
-  if (pathname.startsWith("/api/")) {
+  if (pathname === "/healthz" || pathname.startsWith("/api/")) {
     if (req.method === "OPTIONS") {
       res.writeHead(204, {
         "Access-Control-Allow-Origin": "*",

@@ -82,6 +82,7 @@ PIKAFISH_PATH=/path/to/pikafish npm start
 健康检查：
 
 ```bash
+curl http://localhost:5178/healthz
 curl http://localhost:5178/api/health
 ```
 
