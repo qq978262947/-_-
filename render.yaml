@@ -1,14 +1,12 @@
 services:
   - type: web
     name: xianqi-mini-program
-    runtime: docker
+    runtime: node
     plan: free
     autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
     healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PIKAFISH_THREADS
-        value: 4
-      - key: PIKAFISH_HASH_MB
-        value: 512
