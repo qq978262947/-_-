@@ -13,10 +13,12 @@ RUN set -eux; \
     "https://github.com/official-pikafish/Pikafish/releases/download/${PIKAFISH_RELEASE}/${PIKAFISH_ARCHIVE}" \
     -o /tmp/pikafish.7z \
     && 7z x -y -o/tmp/pikafish-release /tmp/pikafish.7z >/dev/null; then \
-      find /tmp/pikafish-release -type f -exec sh -c 'for candidate do file "$candidate" | grep -qi "ELF 64-bit.*x86-64.*executable" && printf "%s\n" "$candidate"; done' sh {} + > /tmp/pikafish-candidates; \
+      find /tmp/pikafish-release -type f -exec sh -c 'for candidate do file "$candidate" | grep -qi "ELF 64-bit.*x86-64.*executable" && printf "%s\n" "$candidate"; done; true' sh {} + > /tmp/pikafish-candidates || true; \
+      echo "Prebuilt Pikafish candidates: $(wc -l < /tmp/pikafish-candidates)"; \
       if test -s /tmp/pikafish-candidates; then \
         grep -Eiv '(avx|bmi|vnni|sse|popcnt|modern|zen|skylake|apple|arm|aarch|windows|mac|android)' /tmp/pikafish-candidates > /tmp/pikafish-generic || true; \
         if test -s /tmp/pikafish-generic; then head -n 1 /tmp/pikafish-generic > /tmp/pikafish-selected; else head -n 1 /tmp/pikafish-candidates > /tmp/pikafish-selected; fi; \
+        echo "Selected prebuilt Pikafish: $(cat /tmp/pikafish-selected)"; \
         cp "$(cat /tmp/pikafish-selected)" /tmp/pikafish; \
       fi; \
   fi; \
