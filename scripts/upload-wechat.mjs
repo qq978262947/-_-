@@ -22,7 +22,7 @@ const project = new ci.Project({
 await ci.upload({
   project,
   version: config.version || "1.0.0",
-  desc: config.desc || "象棋小程序微信版",
+  desc: config.desc || "象棋练棋辅助工具微信版",
   setting: {
     es6: true,
     minify: true

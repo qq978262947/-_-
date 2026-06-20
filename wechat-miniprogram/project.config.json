@@ -1,5 +1,5 @@
 {
-  "description": "象棋小程序项目配置文件",
+  "description": "象棋练棋辅助工具项目配置文件",
   "appid": "wxd55bc356dfdc9ed9",
   "projectname": "xianqi-mini-program",
   "miniprogramRoot": "./",

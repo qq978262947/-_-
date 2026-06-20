@@ -4,7 +4,7 @@
 
 <view wx:if="{{showFallback}}" class="fallback page">
   <view class="glass-card fallback-card">
-    <view class="title">象棋小程序</view>
+    <view class="title">象棋练棋辅助工具</view>
     <view class="text">
       当前页面需要在微信公众平台配置业务域名后才能打开。请将正式 HTTPS 域名加入小程序业务域名，重新上传审核即可。
     </view>

@@ -5,7 +5,7 @@
     "pages/donate/donate"
   ],
   "window": {
-    "navigationBarTitleText": "象棋小程序",
+    "navigationBarTitleText": "象棋练棋辅助工具",
     "navigationBarBackgroundColor": "#2f2217",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#f7efe2"

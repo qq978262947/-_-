@@ -2,5 +2,5 @@
   "appid": "请填写微信小程序 AppID",
   "privateKeyPath": "./private.key",
   "version": "1.0.0",
-  "desc": "象棋小程序微信版"
+  "desc": "象棋练棋辅助工具微信版"
 }

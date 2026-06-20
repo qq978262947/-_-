@@ -1024,5 +1024,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`象棋小程序已启动：http://localhost:${PORT}`);
+  console.log(`象棋练棋辅助工具已启动：http://localhost:${PORT}`);
 });
