@@ -3931,7 +3931,7 @@
     if (client.unavailable) {
       throw new Error(client.unavailable);
     }
-    const result = await client.analyze({
+    const run = () => client.analyze({
       fen,
       moveTime,
       depth,
@@ -3939,6 +3939,15 @@
       threads,
       timeoutMs
     });
+    let result;
+    try {
+      result = await run();
+    } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+      result = await run();
+    }
     const stats = parsePikafishStats(result.raw || "");
     return {
       available: true,
@@ -3957,6 +3966,7 @@
     const controller = new AbortController();
     const timeoutMs = Math.max(2000, Math.min((config.timeMs || 1000) + 35000, 60000));
     const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+    const threads = aiThreadCount(level);
     try {
       const data = await requestPikafishAnalysis({
         signal: controller.signal,
@@ -3965,7 +3975,8 @@
         level,
         moveTime: config.timeMs,
         depth: Number.isFinite(config.maxDepth) ? config.maxDepth : null,
-        multiPv: 5
+        multiPv: 5,
+        threads
       });
       if (requestId !== game.aiRequestId || !data.move) {
         if (requestId === game.aiRequestId) {
@@ -4013,6 +4024,15 @@
     } finally {
       clearTimeout(timeoutId);
     }
+  }
+
+  function aiThreadCount(level) {
+    if (!window.crossOriginIsolated || typeof SharedArrayBuffer === "undefined") {
+      return 1;
+    }
+    const cores = Number(navigator.hardwareConcurrency) || 4;
+    const cap = level === "master" || level === "bookMaster" ? GUIDE_MAX_THREADS : 4;
+    return clamp(Math.floor(cores / 2) || 2, 1, cap);
   }
 
   function chooseAiMove(color, level) {
