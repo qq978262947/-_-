@@ -93,7 +93,7 @@ curl http://localhost:5178/api/health
 
 ### Docker
 
-Docker 镜像会在构建阶段优先下载 Pikafish 官方 Release 的预编译合集，自动选择 Linux x86-64 可执行文件，并复用仓库内的 `pikafish.nnue`，适合 Render 等 Linux 容器平台。如果官方预编译包结构变化或不可用，会自动回退到源码编译，避免部署直接失败。
+Docker 镜像默认使用轻量构建，不在 Render 构建阶段下载或编译 Pikafish，避免免费部署卡在引擎构建。服务端未检测到 Linux 版 Pikafish 时，接口会返回不可用并由前端/本地逻辑兜底。需要启用服务端 Pikafish 时，可以在服务器中提供 Linux x86-64 可执行文件，并通过 `PIKAFISH_PATH` 指向它。
 
 ```bash
 docker build -t xianqi-mini-program .
