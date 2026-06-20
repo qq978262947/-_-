@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node server.js",
+    "build:pikafish-wasm": "bash scripts/build-pikafish-wasm.sh",
     "check": "node --check server.js && node --check app.js && node --check scripts/upload-wechat.mjs",
     "upload:wechat": "node scripts/upload-wechat.mjs"
   }

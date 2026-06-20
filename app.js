@@ -6,6 +6,7 @@
   const STORAGE_SAVED_GAMES = "xianqi-mini-saved-games";
   const STORAGE_BOARD_THEME = "xianqi-mini-board-theme";
   const STORAGE_AI_LEVEL = "xianqi-mini-ai-level";
+  const STORAGE_GUIDE_MULTI_THREAD = "xianqi-mini-guide-multi-thread";
   const DEFAULT_GUIDE_DEPTH = 17;
   const ONLINE_POLL_MS = 900;
   const ONLINE_MATCH_TIMEOUT_MS = 30000;
@@ -19,6 +20,7 @@
   const SEARCH_INF = 1000000000;
   const REPETITION_LIMIT = 3;
   const API_BASE = window.XIANQI_API_BASE || (window.location.protocol === "file:" ? "http://localhost:5178" : "");
+  const PIKAFISH_WASM_WORKER_URL = "engines/pikafish-wasm/pikafish-wasm-worker.js";
 
   const LABELS = {
     red: {
@@ -53,6 +55,7 @@
   };
 
   const AI_LEVEL_NAMES = {
+    newbie: "新手",
     easy: "入门",
     normal: "稳健",
     hard: "深思",
@@ -60,8 +63,9 @@
     master: "最强AI"
   };
 
-  const BOOK_FIRST_LEVELS = new Set(["easy", "normal", "hard", "bookMaster"]);
+  const BOOK_FIRST_LEVELS = new Set(["newbie", "easy", "normal", "hard", "bookMaster"]);
   const BOOK_SELECTION_CONFIG = {
+    newbie: { bestProbability: 0.25, positiveOnlyOthers: false },
     easy: { bestProbability: 0.5, positiveOnlyOthers: false },
     normal: { bestProbability: 0.7, positiveOnlyOthers: false },
     hard: { bestProbability: 0.7, positiveOnlyOthers: true },
@@ -78,6 +82,7 @@
   const GUIDE_MAX_THREADS = 8;
 
   const AI_SEARCH_CONFIG = {
+    newbie: { minDepth: 1, maxDepth: 1, timeMs: 120, rootWidth: 4, nodeWidth: 2, serverMs: 120 },
     easy: { minDepth: 1, maxDepth: 2, timeMs: 220, rootWidth: 8, nodeWidth: 4, serverMs: 180 },
     normal: { minDepth: 4, maxDepth: 6, timeMs: 950, rootWidth: 16, nodeWidth: 6, serverMs: 650 },
     hard: { minDepth: 9, maxDepth: 12, timeMs: 2400, rootWidth: 20, nodeWidth: 7, serverMs: 1400 },
@@ -86,6 +91,7 @@
   };
 
   const CLIENT_FALLBACK_CONFIG = {
+    newbie: { maxDepth: 1, timeMs: 120, nodeWidth: 3, rootWidth: 5 },
     easy: { maxDepth: 1, timeMs: 220, nodeWidth: 6, rootWidth: 10 },
     normal: { maxDepth: 2, timeMs: 850, nodeWidth: 10, rootWidth: 18 },
     hard: { maxDepth: 4, timeMs: 2000, nodeWidth: 14, rootWidth: 24 },
@@ -823,6 +829,7 @@
     reviewStatus: document.getElementById("reviewStatus"),
     guideSection: document.getElementById("guideSection"),
     guideDepthInput: document.getElementById("guideDepthInput"),
+    guideMultiThreadInput: document.getElementById("guideMultiThreadInput"),
     guideBtn: document.getElementById("guideBtn"),
     guideInfo: document.getElementById("guideInfo"),
     guideLines: document.getElementById("guideLines"),
@@ -856,6 +863,7 @@
   let matchTimer = null;
   let matchStartedAt = 0;
   let guideRefreshTimer = null;
+  let pikafishWasm = null;
   let animationFrame = null;
   let animationTimeout = null;
   let flipRenderFrame = null;
@@ -1144,6 +1152,7 @@
     renderThemeButtons();
     bindEvents();
     restoreGuideDepth();
+    restoreGuideMultiThread();
     resizeCanvas();
     updateUi();
     window.addEventListener("resize", resizeCanvas);
@@ -1224,6 +1233,10 @@
       els.guideDepthInput.value = String(depth);
       saveGuideDepth(depth);
     });
+    els.guideMultiThreadInput?.addEventListener("change", () => {
+      saveGuideMultiThread(Boolean(els.guideMultiThreadInput.checked));
+      updateGuideUi();
+    });
     els.guideStartBtn?.addEventListener("click", handleStepStart);
     els.guidePrevBtn?.addEventListener("click", handleStepPrev);
     els.guidePlayBtn?.addEventListener("click", handleStepPlay);
@@ -1271,17 +1284,20 @@
   }
 
   function guideThreadCount(depth) {
-    if (depth < GUIDE_MULTI_THREAD_DEPTH) {
+    if (!els.guideMultiThreadInput?.checked || depth < GUIDE_MULTI_THREAD_DEPTH) {
       return 1;
     }
-    const cores = Number(navigator.hardwareConcurrency) || GUIDE_MAX_THREADS;
-    return Math.max(2, Math.min(cores - 1 || cores, GUIDE_MAX_THREADS));
+    if (!window.crossOriginIsolated || typeof SharedArrayBuffer === "undefined") {
+      return 1;
+    }
+    const cores = Number(navigator.hardwareConcurrency) || 4;
+    return clamp(Math.floor(cores / 2) || 2, 2, GUIDE_MAX_THREADS);
   }
 
   function guideAnalysisMode(depth, threads) {
-    return depth >= GUIDE_MULTI_THREAD_DEPTH
-      ? `固定深度 ${depth} · ${threads} 线程提速`
-      : `固定深度 ${depth} · 单线程`;
+    const multiThreadRequested = Boolean(els.guideMultiThreadInput?.checked && depth >= GUIDE_MULTI_THREAD_DEPTH);
+    const unavailable = multiThreadRequested && threads <= 1 && (!window.crossOriginIsolated || typeof SharedArrayBuffer === "undefined");
+    return `固定深度 ${depth} · ${threads > 1 ? `${threads}线程` : "单线程"} Worker 后台分析${unavailable ? "（当前浏览器未开启跨源隔离）" : ""}`;
   }
 
   function restoreGuideDepth() {
@@ -1298,6 +1314,16 @@
 
   function saveGuideDepth(depth) {
     localStorage.setItem(STORAGE_GUIDE_DEPTH, String(normalizeGuideDepth(depth)));
+  }
+
+  function restoreGuideMultiThread() {
+    if (els.guideMultiThreadInput) {
+      els.guideMultiThreadInput.checked = localStorage.getItem(STORAGE_GUIDE_MULTI_THREAD) === "1";
+    }
+  }
+
+  function saveGuideMultiThread(enabled) {
+    localStorage.setItem(STORAGE_GUIDE_MULTI_THREAD, enabled ? "1" : "0");
   }
 
   function restoreBoardTheme() {
@@ -3056,18 +3082,14 @@
     game.notice = `Pikafish 正在以${guideMode}分析${COLOR_NAMES[analysis.turn]}下一手。`;
     render();
     try {
-      const data = await requestJson("/api/engine/pikafish", {
-        method: "POST",
+      const data = await requestPikafishAnalysis({
         signal: controller.signal,
-        body: JSON.stringify({
-          board: analysis.board,
-          turn: analysis.turn,
-          moveTime: 300000,
-          depth: guideDepth,
-          multiPv: 6,
-          threads: guideThreads,
-          analysisMode: guideDepth >= GUIDE_MULTI_THREAD_DEPTH ? "fixed-depth-multi-thread" : "fixed-depth-single-thread"
-        })
+        board: analysis.board,
+        turn: analysis.turn,
+        moveTime: 300000,
+        depth: guideDepth,
+        multiPv: 6,
+        threads: guideThreads
       });
       if (token !== game.guide.token) {
         return;
@@ -3151,18 +3173,14 @@
       if (!replyBase) {
         continue;
       }
-      const reply = await requestJson("/api/engine/pikafish", {
-        method: "POST",
+      const reply = await requestPikafishAnalysis({
         signal,
-        body: JSON.stringify({
-          board: replyBase.board,
-          turn: replyBase.turn,
-          moveTime: 300000,
-          depth: guideDepth,
-          multiPv: 1,
-          threads: guideThreads,
-          analysisMode: guideDepth >= GUIDE_MULTI_THREAD_DEPTH ? "fixed-depth-multi-thread-reply" : "fixed-depth-single-thread-reply"
-        })
+        board: replyBase.board,
+        turn: replyBase.turn,
+        moveTime: 300000,
+        depth: guideDepth,
+        multiPv: 1,
+        threads: guideThreads
       });
       if (!reply.available || !reply.move) {
         continue;
@@ -3607,7 +3625,7 @@
     render();
     const requestId = ++game.aiRequestId;
     const config = AI_SEARCH_CONFIG[game.aiLevel] || AI_SEARCH_CONFIG.normal;
-    const watchdogMs = Math.max(8000, Math.min((config.serverMs || 1000) + AI_WATCHDOG_EXTRA_MS, AI_WATCHDOG_MAX_MS));
+    const watchdogMs = Math.max(8000, Math.min((config.timeMs || 1000) + AI_WATCHDOG_EXTRA_MS, AI_WATCHDOG_MAX_MS));
     aiWatchdogTimer = setTimeout(async () => {
       aiWatchdogTimer = null;
       if (requestId !== game.aiRequestId || !game.thinking || game.winner || game.draw) {
@@ -3678,10 +3696,6 @@
     if (!moves.length) {
       return null;
     }
-    if (level === "master") {
-      const engineMove = await requestPikafishMove(color, level, moves, requestId);
-      return engineMove || chooseAiMove(color, level);
-    }
     if (BOOK_FIRST_LEVELS.has(level)) {
       const isFirstAiMove = !game.history.some((item) => item.color === color);
       if (isFirstAiMove) {
@@ -3697,11 +3711,11 @@
         }
       }
     }
-    const engineMove = await requestPikafishMove(color, level, moves, requestId);
-    if (engineMove) {
-      return engineMove;
+    if (requestId !== game.aiRequestId) {
+      return null;
     }
-    return chooseAiMove(color, level);
+    const engineMove = await requestPikafishMove(color, level, moves, requestId);
+    return engineMove || chooseAiMove(color, level);
   }
 
   async function chooseFirstAiMoveByStrategy(color, level, moves, requestId) {
@@ -3743,32 +3757,224 @@
     return "random";
   }
 
+  function getPikafishWasmClient() {
+    if (pikafishWasm) {
+      return pikafishWasm;
+    }
+    if (!window.Worker) {
+      pikafishWasm = { unavailable: "当前浏览器不支持 Web Worker" };
+      return pikafishWasm;
+    }
+    let nextId = 1;
+    pikafishWasm = {
+      analyze(payload) {
+        const id = nextId++;
+        return new Promise((resolve, reject) => {
+          const worker = new Worker(PIKAFISH_WASM_WORKER_URL);
+          let settled = false;
+          const finish = (fn, value) => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            try {
+              worker.terminate();
+            } catch {}
+            fn(value);
+          };
+          worker.onmessage = (event) => {
+            const message = event.data || {};
+            if (message.type === "ready" && !message.ok) {
+              finish(reject, new Error(message.error || "Pikafish WASM 初始化失败"));
+              return;
+            }
+            if (message.id !== id) {
+              return;
+            }
+            if (message.ok) {
+              finish(resolve, message);
+            } else {
+              finish(reject, new Error(message.error || "Pikafish WASM 分析失败"));
+            }
+          };
+          worker.onerror = (error) => {
+            finish(reject, new Error(error.message || "Pikafish WASM Worker 加载失败"));
+          };
+          worker.postMessage({ type: "analyze", id, ...payload });
+        });
+      },
+      isReady() {
+        return true;
+      }
+    };
+    return pikafishWasm;
+  }
+
+  function boardToFen(board, turn) {
+    const pieceMap = {
+      red: { king: "K", advisor: "A", bishop: "B", knight: "N", rook: "R", cannon: "C", pawn: "P" },
+      black: { king: "k", advisor: "a", bishop: "b", knight: "n", rook: "r", cannon: "c", pawn: "p" }
+    };
+    const ranks = board.map((row) => {
+      let empty = 0;
+      let text = "";
+      row.forEach((piece) => {
+        if (!piece) {
+          empty += 1;
+          return;
+        }
+        if (empty) {
+          text += empty;
+          empty = 0;
+        }
+        text += pieceMap[piece.color]?.[piece.type] || "1";
+      });
+      return text + (empty ? empty : "");
+    });
+    return `${ranks.join("/")} ${turn === "red" ? "w" : "b"} - - 0 1`;
+  }
+
+  function uciToMove(bestmove) {
+    const match = String(bestmove || "").match(/^([a-i])([0-9])([a-i])([0-9])/);
+    if (!match) {
+      return null;
+    }
+    return {
+      from: {
+        row: 9 - Number(match[2]),
+        col: match[1].charCodeAt(0) - 97
+      },
+      to: {
+        row: 9 - Number(match[4]),
+        col: match[3].charCodeAt(0) - 97
+      }
+    };
+  }
+
+  function parsePvText(pvText) {
+    return String(pvText || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(uciToMove)
+      .filter(Boolean);
+  }
+
+  function parseScore(line) {
+    const mate = /\bscore mate (-?\d+)/.exec(line);
+    if (mate) {
+      const value = Number(mate[1]);
+      return {
+        type: "mate",
+        value,
+        cp: value > 0 ? 100000 - value : -100000 - value,
+        text: value > 0 ? `${value}步成杀` : `${Math.abs(value)}步被杀`
+      };
+    }
+    const cp = /\bscore cp (-?\d+)/.exec(line);
+    if (cp) {
+      const value = Number(cp[1]);
+      return {
+        type: "cp",
+        value,
+        cp: value,
+        text: `${value > 0 ? "+" : ""}${(value / 100).toFixed(2)}兵`
+      };
+    }
+    return { type: "unknown", value: 0, cp: 0, text: "未知" };
+  }
+
+  function parsePikafishVariations(raw) {
+    const latestByPv = new Map();
+    String(raw || "").split(/\r?\n/).forEach((line) => {
+      if (!/\bpv\s+/.test(line)) {
+        return;
+      }
+      const depth = Number(/\bdepth (\d+)/.exec(line)?.[1] || 0);
+      const multipv = Number(/\bmultipv (\d+)/.exec(line)?.[1] || 1);
+      const nodes = Number(/\bnodes (\d+)/.exec(line)?.[1] || 0);
+      const time = Number(/\btime (\d+)/.exec(line)?.[1] || 0);
+      const pvText = line.split(/\bpv\s+/)[1] || "";
+      const moves = parsePvText(pvText);
+      if (!moves.length) {
+        return;
+      }
+      latestByPv.set(multipv, {
+        rank: multipv,
+        depth,
+        nodes,
+        time,
+        score: parseScore(line),
+        pv: moves
+      });
+    });
+    return [...latestByPv.values()].sort((a, b) => a.rank - b.rank);
+  }
+
+  function parsePikafishStats(raw) {
+    const depths = [...String(raw || "").matchAll(/info depth (\d+)/g)].map((match) => Number(match[1]));
+    const variations = parsePikafishVariations(raw);
+    return {
+      depthReached: depths.length ? Math.max(...depths) : null,
+      pv: variations[0]?.pv || [],
+      variations
+    };
+  }
+
+  async function requestPikafishAnalysis({ board, turn, moveTime, depth, multiPv, threads, signal }) {
+    if (signal?.aborted) {
+      throw new DOMException("Pikafish WASM 请求已取消", "AbortError");
+    }
+    const fen = boardToFen(board, turn);
+    const timeoutMs = Math.max(3000, Math.min(Number(moveTime) || 1000, 300000) + 20000);
+    const client = getPikafishWasmClient();
+    if (client.unavailable) {
+      throw new Error(client.unavailable);
+    }
+    const result = await client.analyze({
+      fen,
+      moveTime,
+      depth,
+      multiPv,
+      threads,
+      timeoutMs
+    });
+    const stats = parsePikafishStats(result.raw || "");
+    return {
+      available: true,
+      source: "wasm",
+      bestmove: result.bestmove,
+      move: uciToMove(result.bestmove),
+      fen,
+      raw: result.raw || "",
+      nnue: /NNUE evaluation/i.test(result.raw || ""),
+      ...stats
+    };
+  }
+
   async function requestPikafishMove(color, level, legalMoves, requestId) {
     const config = AI_SEARCH_CONFIG[level] || AI_SEARCH_CONFIG.normal;
     const controller = new AbortController();
-    const timeoutMs = Math.max(2000, Math.min((config.serverMs || 1000) + 35000, 60000));
+    const timeoutMs = Math.max(2000, Math.min((config.timeMs || 1000) + 35000, 60000));
     const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const data = await requestJson("/api/engine/pikafish", {
-        method: "POST",
+      const data = await requestPikafishAnalysis({
         signal: controller.signal,
-        body: JSON.stringify({
-          board: game.board,
-          turn: color,
-          level,
-          moveTime: config.serverMs,
-          depth: Number.isFinite(config.maxDepth) ? config.maxDepth : null,
-          multiPv: 5
-        })
+        board: game.board,
+        turn: color,
+        level,
+        moveTime: config.timeMs,
+        depth: Number.isFinite(config.maxDepth) ? config.maxDepth : null,
+        multiPv: 5
       });
       if (requestId !== game.aiRequestId || !data.move) {
         if (requestId === game.aiRequestId) {
           game.bookInfo = {
             source: "Pikafish 异常",
-            family: "服务端未返回着法",
+            family: "WASM 未返回着法",
             variation: data.error || data.bestmove || "无 bestmove",
             notation: "启用兜底",
-            plan: `接口返回 available=${Boolean(data.available)}，${data.error || "没有可执行着法"}。已立即切换客户端自主搜索。`
+            plan: `WASM 返回 available=${Boolean(data.available)}，${data.error || "没有可执行着法"}。已立即切换客户端自主搜索。`
           };
         }
         return null;
@@ -3780,28 +3986,28 @@
           family: "返回着法非法",
           variation: data.bestmove || moveKey(data.move),
           notation: "启用兜底",
-          plan: "服务端返回的 bestmove 不在当前前端合法着法集合中，已切换本地兜底。"
+          plan: "Pikafish WASM 返回的 bestmove 不在当前前端合法着法集合中，已切换本地兜底。"
         };
         return null;
       }
       game.bookInfo = {
         source: "Pikafish",
-        family: data.available ? "服务端 UCI 引擎" : "服务端未可用",
+        family: data.available ? "浏览器 WASM 引擎" : "WASM 未可用",
         variation: data.bestmove || "bestmove",
         notation: formatMoveForBook(legal),
         plan: data.available
-          ? `Pikafish 已接管本手决策，NNUE ${data.nnue ? "已加载" : "状态未知"}。${describePositiveEngineLines(data)}`
-          : "未检测到 Pikafish 二进制，已回退本地算法。"
+          ? `Pikafish WASM 已在浏览器本地接管本手决策，NNUE ${data.nnue ? "已加载" : "状态未知"}。${describePositiveEngineLines(data)}`
+          : "未检测到 Pikafish WASM，已回退本地算法。"
       };
       return legal;
     } catch (error) {
       const isAbort = error.name === "AbortError";
       game.bookInfo = {
-        source: "Pikafish 请求失败",
-        family: isAbort ? "接口超时" : "接口异常",
+        source: "Pikafish WASM 失败",
+        family: isAbort ? "WASM 超时" : "WASM 异常",
         variation: isAbort ? `超过 ${Math.round(timeoutMs / 1000)} 秒未返回` : (error.message || "未知错误"),
         notation: "启用兜底",
-        plan: "前端未能及时取得 Pikafish 着法，已立即切换客户端自主搜索。"
+        plan: "浏览器未能及时取得 Pikafish WASM 着法，已立即切换客户端自主搜索。"
       };
       return null;
     } finally {
@@ -3825,7 +4031,7 @@
       game.bookInfo = {
         source: `${AI_LEVEL_NAMES[level] || "电脑"}客户端强搜索`,
         family: "离线杀棋",
-        variation: "Pikafish 不可用时发现一步杀",
+        variation: "本地 AI 发现一步杀",
         notation: formatMoveForBook(immediateMate),
         plan: `${COLOR_NAMES[color]}检测到立即制胜路线，优先执行杀棋。`
       };
@@ -3836,9 +4042,9 @@
     game.bookInfo = {
       source: `${AI_LEVEL_NAMES[level] || "电脑"}客户端强搜索`,
       family: "Alpha-Beta 自主计算",
-      variation: "Pikafish 不可用时启用",
+      variation: "本地 AI 计算",
       notation: formatMoveForBook(move),
-      plan: `${COLOR_NAMES[color]}已用客户端迭代加深搜索兜底，评分 ${Math.round(result.score || 0)}。人机对战仍优先调用 Pikafish，特殊情况下才启用此自主 AI。`
+      plan: `${COLOR_NAMES[color]}已在浏览器本地完成迭代加深搜索，评分 ${Math.round(result.score || 0)}。这是 Pikafish WASM 缺失时的兜底。`
     };
     return move;
   }
@@ -4045,6 +4251,9 @@
 
   function firstMovePalette(color, level) {
     const side = color === "red" ? firstMovePaletteRed() : firstMovePaletteBlack();
+    if (level === "newbie") {
+      return side.newbie || side.easy;
+    }
     return level === "easy" ? side.easy : side.normal;
   }
 
@@ -4062,6 +4271,11 @@
       firstMoveItem(9, 8, 8, 8, "右车起动", 0.02)
     ];
     return {
+      newbie: [
+        ...common,
+        firstMoveItem(7, 1, 5, 1, "2路巡河炮", 0.08),
+        firstMoveItem(7, 7, 5, 7, "9路巡河炮", 0.08)
+      ],
       normal: common,
       easy: [
         ...common,
@@ -4085,6 +4299,11 @@
       firstMoveItem(0, 8, 1, 8, "右车起动", 0.02)
     ];
     return {
+      newbie: [
+        ...common,
+        firstMoveItem(2, 1, 4, 1, "2路巡河炮", 0.08),
+        firstMoveItem(2, 7, 4, 7, "9路巡河炮", 0.08)
+      ],
       normal: common,
       easy: [
         ...common,
@@ -4111,37 +4330,110 @@
     const ply = game.moveKeys.length;
     const legalByKey = new Map(legalMoves.map((move) => [moveKey(move), move]));
     const candidates = [];
+    const seen = new Set();
     OPENING_BOOK_LINES.forEach((line) => {
-      if (ply >= line.moves.length) {
-        return;
-      }
-      const next = line.moves[ply];
-      if (next.color !== color || !lineMatchesHistory(line, ply)) {
-        return;
-      }
-      const legal = legalByKey.get(next.key);
-      if (!legal) {
-        return;
-      }
-      candidates.push({
-        move: legal,
-        info: {
-          source: line.source,
-          family: line.family,
-          variation: line.variation,
-          notation: next.notation,
-          plan: line.plan
-        },
-        score: line.weight + Math.max(0, 10 - ply),
-        weight: line.weight + Math.max(0, 10 - ply)
+      openingBookLineVariants(line).forEach((variant) => {
+        if (ply >= variant.moves.length) {
+          return;
+        }
+        const next = variant.moves[ply];
+        if (next.color !== color || !lineMatchesMoveHistory(variant.moves, ply)) {
+          return;
+        }
+        const legal = legalByKey.get(next.key);
+        if (!legal) {
+          return;
+        }
+        const uniqueKey = `${variant.id}:${ply}:${next.key}`;
+        if (seen.has(uniqueKey)) {
+          return;
+        }
+        seen.add(uniqueKey);
+        candidates.push({
+          move: legal,
+          info: {
+            source: variant.source,
+            family: variant.family,
+            variation: variant.variation,
+            notation: next.notation,
+            plan: variant.plan
+          },
+          score: variant.weight + Math.max(0, 10 - ply),
+          weight: variant.weight + Math.max(0, 10 - ply)
+        });
       });
     });
     return candidates;
   }
 
-  function lineMatchesHistory(line, ply) {
+  function openingBookLineVariants(line) {
+    const variants = [
+      makeBookLineVariant(line, "base"),
+      makeBookLineVariant(line, "mirrorCols"),
+      makeBookLineVariant(line, "swapColors"),
+      makeBookLineVariant(line, "swapColorsMirrorCols")
+    ].filter(Boolean);
+    const seen = new Set();
+    return variants.filter((variant) => {
+      const key = variant.moves.map((move) => `${move.color}:${move.key}`).join("|");
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function makeBookLineVariant(line, transform) {
+    const transformedMoves = line.moves.map((move) => transformBookMove(move, transform));
+    const suffixMap = {
+      base: "",
+      mirrorCols: " · 左右镜像",
+      swapColors: " · 红黑镜像",
+      swapColorsMirrorCols: " · 红黑左右镜像"
+    };
+    return {
+      ...line,
+      id: `${line.id}-${transform}`,
+      family: `${line.family}${suffixMap[transform] || ""}`,
+      variation: `${line.variation}${suffixMap[transform] || ""}`,
+      moves: transformedMoves
+    };
+  }
+
+  function transformBookMove(move, transform) {
+    const mirrorCols = transform === "mirrorCols" || transform === "swapColorsMirrorCols";
+    const swapColors = transform === "swapColors" || transform === "swapColorsMirrorCols";
+    const mapSquare = (square) => ({
+      row: swapColors ? ROWS - 1 - square.row : square.row,
+      col: mirrorCols ? COLS - 1 - square.col : square.col
+    });
+    const from = mapSquare(move.from);
+    const to = mapSquare(move.to);
+    const color = swapColors ? otherColor(move.color) : move.color;
+    return {
+      ...move,
+      color,
+      from,
+      to,
+      key: moveKeyFromParts(from.row, from.col, to.row, to.col),
+      notation: transformBookNotation(move.notation, transform)
+    };
+  }
+
+  function transformBookNotation(notation, transform) {
+    const suffixMap = {
+      base: "",
+      mirrorCols: "",
+      swapColors: "（红黑镜像）",
+      swapColorsMirrorCols: "（红黑左右镜像）"
+    };
+    return `${notation}${suffixMap[transform] || ""}`;
+  }
+
+  function lineMatchesMoveHistory(moves, ply) {
     for (let index = 0; index < ply; index += 1) {
-      const expected = line.moves[index];
+      const expected = moves[index];
       const historyItem = game.history[game.history.length - 1 - index];
       if (!expected || expected.key !== game.moveKeys[index] || expected.color !== historyItem?.color) {
         return false;
@@ -4751,6 +5043,7 @@
     document.querySelectorAll("[data-theme]").forEach((button) => {
       button.classList.toggle("active", button.dataset.theme === game.theme);
     });
+    els.canvasWrap?.classList.toggle("input-locked", Boolean(game.thinking || game.animation));
 
     els.aiSection.classList.toggle("hidden", game.mode !== "ai");
     els.onlineSection.classList.toggle("hidden", game.mode !== "online");
@@ -4821,11 +5114,11 @@
       els.bookMeta.textContent = `${game.bookInfo.variation}：${game.bookInfo.notation}。${game.bookInfo.plan}`;
       return;
     }
-    els.bookTitle.textContent = BOOK_FIRST_LEVELS.has(game.aiLevel) ? "谱库优先" : "Pikafish 接管";
+    els.bookTitle.textContent = BOOK_FIRST_LEVELS.has(game.aiLevel) ? "本地谱库优先" : "Pikafish WASM 接管";
     const analysis = describeCurrentOpponentCandidates();
     els.bookMeta.textContent = analysis || (BOOK_FIRST_LEVELS.has(game.aiLevel)
-      ? `${AI_LEVEL_NAMES[game.aiLevel]}首手按随机75% / 谱库20% / Pikafish5%；第二手起按 ${game.moveKeys.length} 手历史精确匹配谱库。`
-      : "最强AI 直接由服务端 Pikafish + NNUE 接管，异常时启用客户端强搜索兜底。");
+      ? `${AI_LEVEL_NAMES[game.aiLevel]}首手按随机75% / 谱库20% / Pikafish WASM 5%；第二手起按 ${game.moveKeys.length} 手历史精确匹配本地谱库，并自动匹配左右镜像、红黑镜像；脱谱后由浏览器内置 Pikafish WASM 接管。`
+      : "最强AI 直接由浏览器内置 Pikafish WASM 接管，不调用服务端接口。");
   }
 
   function describeCurrentOpponentCandidates() {
@@ -5375,13 +5668,13 @@
 
   async function probePikafishHealth() {
     try {
-      const health = await requestJson("/api/health");
-      if (health.pikafish) {
-        return `服务端已启用，Pikafish 可用：${health.enginePath || "未知路径"}，NNUE ${health.nnue ? "已加载" : "未确认"}，探活深度 ${health.depthReached || "未知"}，bestmove ${health.bestmove || "无"}。`;
+      const response = await fetch("engines/pikafish-wasm/pikafish.js", { cache: "no-store" });
+      if (response.ok) {
+        return "Pikafish WASM 脚本已找到，但初始化或分析失败。请检查浏览器是否支持 WebAssembly、SharedArrayBuffer 和跨源隔离。";
       }
-      return `服务端可访问，但 Pikafish 探活失败：${health.error || "未知错误"}，路径 ${health.enginePath || "未找到"}。`;
+      return `未找到 Pikafish WASM 脚本：HTTP ${response.status}。请先运行 npm run build:pikafish-wasm。`;
     } catch (error) {
-      return `服务端 health 不可访问：${error.message}。请确认正在使用 http://localhost:5178/ 且 node server.js 已运行。`;
+      return `Pikafish WASM 探活失败：${error.message}。请确认 pikafish.js 和 pikafish.wasm 已发布到 engines/pikafish-wasm/。`;
     }
   }
 

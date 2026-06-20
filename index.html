@@ -77,10 +77,14 @@
             <div class="guide-head">
               <div>
                 <h2>Pikafish 指导</h2>
-                <div class="hint-line">固定深度 1-99，默认 17；深度20起自动多线程提速，会记住上次输入。</div>
+                <div class="hint-line">固定深度 1-99，默认 17；浏览器内置 Pikafish WASM 分析，会记住上次输入。</div>
               </div>
               <div class="guide-actions">
                 <input id="guideDepthInput" type="number" min="1" max="99" step="1" value="17" inputmode="numeric" aria-label="Pikafish 固定搜索深度">
+                <label class="guide-thread-toggle" title="深度较高时尝试让 Pikafish 使用更多线程">
+                  <input id="guideMultiThreadInput" type="checkbox">
+                  <span>多线程提速</span>
+                </label>
                 <button class="primary-action" type="button" id="guideBtn">
                   <span aria-hidden="true">◇</span>
                   推演
@@ -115,6 +119,7 @@
           <section class="control-section" id="aiSection">
             <h2>AI 难度</h2>
             <div class="segmented ai-levels" role="group" aria-label="AI 难度">
+              <button class="segment" type="button" data-ai-level="newbie">新手</button>
               <button class="segment" type="button" data-ai-level="easy">入门</button>
               <button class="segment" type="button" data-ai-level="normal">稳健</button>
               <button class="segment" type="button" data-ai-level="hard">深思</button>
@@ -130,7 +135,7 @@
             </div>
             <div class="book-card" id="bookPanel">
               <strong id="bookTitle">谱库待命</strong>
-              <span id="bookMeta">走谱档完全匹配棋谱才走谱；未匹配直接交给 Pikafish。</span>
+              <span id="bookMeta">走谱档完全匹配本地谱库才走谱；未匹配直接交给 Pikafish WASM。</span>
             </div>
           </section>
 

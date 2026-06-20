@@ -8,6 +8,7 @@ yarn-error.log*
 *.log
 dist/
 coverage/
+.build/
 /project.config.json
 /project.private.config.json
 wechat.config.json

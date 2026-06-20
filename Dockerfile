@@ -11,6 +11,7 @@ COPY index.html app.js styles.css server.js robots.txt sitemap.xml ./
 COPY assets ./assets
 COPY engines/pikafish/README.md ./engines/pikafish/README.md
 COPY engines/pikafish/pikafish.nnue ./engines/pikafish/pikafish.nnue
+COPY engines/pikafish-wasm ./engines/pikafish-wasm
 
 EXPOSE 10000
 
