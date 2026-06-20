@@ -4,6 +4,11 @@
 
 开源地址：https://github.com/qq978262947/-_-
 
+## 配图
+
+- 2K 桌面视口截图：`assets/promotion-desktop-2k-board.png`
+- 手机视口截图：`assets/promotion-mobile-board.png`
+
 ## 一句话介绍
 
 一款支持 Pikafish AI 指导、人机对战、玩家对练、棋谱复盘和多套棋盘风格的网页中国象棋小程序。
@@ -62,6 +67,27 @@ https://github.com/qq978262947/-_-
 
 体验地址：
 https://xianqi-mini-program.onrender.com
+
+## 抖音/快手
+
+标题：
+
+我做了一个手机上也能完整下棋的中国象棋小程序
+
+口播/字幕：
+
+最近做了一个网页象棋小程序，不用安装，打开就能下。
+
+它支持人机对战、玩家对练、Pikafish AI 指导、多路线推演和复盘。手机屏幕也做了适配，棋盘可以完整显示。
+
+想试试的话，搜索或打开：
+https://xianqi-mini-program.onrender.com
+
+视频建议：
+
+- 先展示手机端完整棋盘。
+- 再展示走一步棋和 AI 推荐。
+- 最后展示复盘或棋盘风格切换。
 
 ## GitHub README 简短宣传语
 
