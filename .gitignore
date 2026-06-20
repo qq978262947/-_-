@@ -7,6 +7,7 @@ yarn-error.log*
 .env.*
 *.log
 dist/
+release/
 coverage/
 .build/
 /project.config.json

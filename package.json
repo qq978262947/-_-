@@ -3,13 +3,65 @@
   "version": "1.0.0",
   "private": false,
   "license": "GPL-3.0-only",
+  "main": "desktop/main.cjs",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node server.js",
+    "desktop": "electron .",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist": "electron-builder --mac --win nsis portable",
     "build:pikafish-wasm": "bash scripts/build-pikafish-wasm.sh",
-    "check": "node --check server.js && node --check app.js && node --check scripts/upload-wechat.mjs",
+    "check": "node --check server.js && node --check app.js && node --check desktop/main.cjs && node --check scripts/upload-wechat.mjs",
     "upload:wechat": "node scripts/upload-wechat.mjs"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.xianqi.practice.assistant",
+    "productName": "象棋练棋辅助工具",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "server.js",
+      "index.html",
+      "app.js",
+      "styles.css",
+      "assets/**/*",
+      "engines/pikafish-wasm/**/*",
+      "robots.txt",
+      "sitemap.xml",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "engines/pikafish",
+        "to": "engines/pikafish",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

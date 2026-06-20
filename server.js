@@ -6,7 +6,8 @@ const os = require("os");
 const { spawn } = require("child_process");
 
 const PORT = Number(process.env.PORT || 5178);
-const ROOT = __dirname;
+const ROOT = process.env.XIANQI_APP_ROOT || __dirname;
+const RESOURCES_ROOT = process.resourcesPath || ROOT;
 const ROOMS = new Map();
 let MATCH_WAITING = null;
 const ROOM_TTL_MS = 1000 * 60 * 60 * 6;
@@ -23,10 +24,13 @@ const PIKAFISH_THREADS = Math.max(1, Math.min(Number(process.env.PIKAFISH_THREAD
 const PIKAFISH_HASH_MB = Math.max(16, Math.min(Number(process.env.PIKAFISH_HASH_MB) || 512, 4096));
 const PIKAFISH_CANDIDATES = [
   process.env.PIKAFISH_PATH,
+  path.join(RESOURCES_ROOT, "engines", "pikafish", "pikafish.exe"),
+  path.join(RESOURCES_ROOT, "engines", "pikafish", "pikafish"),
+  path.join(RESOURCES_ROOT, "engines", "pikafish", "pikafish-arm64"),
   path.join(ROOT, "engines", "pikafish", "pikafish"),
   path.join(ROOT, "engines", "pikafish", "pikafish-arm64"),
+  path.join(ROOT, "engines", "pikafish", "pikafish.exe"),
   "/Users/wangjun/Downloads/Pikafish-master/src/pikafish",
-  path.join(ROOT, "engines", "pikafish", "pikafish.exe")
 ].filter(Boolean);
 let pikafishProcess = null;
 let pikafishReady = null;
@@ -1000,7 +1004,8 @@ function serveStatic(req, res, pathname) {
   });
 }
 
-const server = http.createServer((req, res) => {
+function createServer() {
+  return http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = decodeURIComponent(url.pathname);
   if (pathname === "/healthz" || pathname.startsWith("/api/")) {
@@ -1024,8 +1029,30 @@ const server = http.createServer((req, res) => {
     return;
   }
   serveStatic(req, res, pathname);
-});
+  });
+}
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`象棋练棋辅助工具已启动：http://localhost:${PORT}`);
-});
+function startServer({ port = PORT, host = "0.0.0.0" } = {}) {
+  const server = createServer();
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, host, () => {
+      const address = server.address();
+      const actualPort = typeof address === "object" && address ? address.port : port;
+      console.log(`象棋练棋辅助工具已启动：http://localhost:${actualPort}`);
+      resolve({ server, port: actualPort, url: `http://127.0.0.1:${actualPort}` });
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  createServer,
+  startServer
+};

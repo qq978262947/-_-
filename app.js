@@ -21,6 +21,7 @@
   const REPETITION_LIMIT = 3;
   const API_BASE = window.XIANQI_API_BASE || (window.location.protocol === "file:" ? "http://localhost:5178" : "");
   const PIKAFISH_WASM_WORKER_URL = "engines/pikafish-wasm/pikafish-wasm-worker.js";
+  const DESKTOP_MODE = new URLSearchParams(window.location.search).get("desktop") === "1";
 
   const LABELS = {
     red: {
@@ -3675,10 +3676,31 @@
           return;
         }
         console.error("AI move failed", error);
+        window.__lastAiError = {
+          color,
+          level: game.aiLevel,
+          message: error.message || String(error),
+          stack: error.stack || "",
+          at: new Date().toISOString()
+        };
+        game.bookInfo = {
+          source: "Pikafish 调度异常",
+          family: "AI 外层调度",
+          variation: error.message || String(error),
+          notation: "重试 Pikafish",
+          plan: "AI 外层调度捕获异常，正在重新请求浏览器内置 Pikafish WASM。"
+        };
         clearAiTimers();
-        game.thinking = false;
         render();
         await waitForNextPaint();
+        const legalMoves = getAllLegalMoves(game.board, color);
+        const retry = legalMoves.length ? await requestPikafishMove(color, game.aiLevel, legalMoves, requestId) : null;
+        if (retry && requestId === game.aiRequestId && game.turn === color && game.mode === "ai") {
+          game.thinking = false;
+          commitMove(retry, "ai");
+          return;
+        }
+        game.thinking = false;
         const fallback = chooseAiMove(color, game.aiLevel);
         if (fallback) {
           commitMove(fallback, "ai");
@@ -3715,6 +3737,9 @@
       return null;
     }
     const engineMove = await requestPikafishMove(color, level, moves, requestId);
+    if (requestId !== game.aiRequestId) {
+      return null;
+    }
     return engineMove || chooseAiMove(color, level);
   }
 
@@ -3923,20 +3948,49 @@
 
   async function requestPikafishAnalysis({ board, turn, moveTime, depth, multiPv, threads, signal }) {
     if (signal?.aborted) {
-      throw new DOMException("Pikafish WASM 请求已取消", "AbortError");
+      throw new DOMException("Pikafish 请求已取消", "AbortError");
     }
     const fen = boardToFen(board, turn);
     const timeoutMs = Math.max(3000, Math.min(Number(moveTime) || 1000, 300000) + 20000);
+    if (DESKTOP_MODE) {
+      const nativeResult = await requestJson("/api/engine/pikafish", {
+        method: "POST",
+        signal,
+        body: JSON.stringify({
+          board,
+          turn,
+          moveTime,
+          depth,
+          multiPv,
+          threads
+        })
+      });
+      if (!nativeResult.available || !nativeResult.move) {
+        throw new Error(nativeResult.error || "桌面版 Pikafish 原生引擎未返回着法");
+      }
+      return {
+        available: true,
+        source: "native",
+        bestmove: nativeResult.bestmove,
+        move: nativeResult.move,
+        fen: nativeResult.fen || fen,
+        raw: nativeResult.raw || "",
+        nnue: Boolean(nativeResult.nnue),
+        depthReached: nativeResult.depthReached || null,
+        pv: nativeResult.pv || [],
+        variations: nativeResult.variations || []
+      };
+    }
     const client = getPikafishWasmClient();
     if (client.unavailable) {
       throw new Error(client.unavailable);
     }
-    const run = () => client.analyze({
+    const run = (threadCount = threads) => client.analyze({
       fen,
       moveTime,
       depth,
       multiPv,
-      threads,
+      threads: threadCount,
       timeoutMs
     });
     let result;
@@ -3946,7 +4000,12 @@
       if (signal?.aborted) {
         throw error;
       }
-      result = await run();
+      try {
+        result = await run(1);
+      } catch (retryError) {
+        retryError.message = `${retryError.message || "Pikafish WASM 分析失败"}；多线程重试前错误：${error.message || String(error)}`;
+        throw retryError;
+      }
     }
     const stats = parsePikafishStats(result.raw || "");
     return {
@@ -3992,6 +4051,15 @@
       }
       const legal = legalMoves.find((move) => moveKey(move) === moveKey(data.move));
       if (!legal) {
+        console.warn("Pikafish returned illegal move", {
+          color,
+          level,
+          fen: data.fen,
+          bestmove: data.bestmove,
+          parsed: data.move,
+          legalMoves: legalMoves.map(moveKey),
+          raw: data.raw
+        });
         game.bookInfo = {
           source: "Pikafish 异常",
           family: "返回着法非法",
@@ -4003,16 +4071,23 @@
       }
       game.bookInfo = {
         source: "Pikafish",
-        family: data.available ? "浏览器 WASM 引擎" : "WASM 未可用",
+        family: data.source === "native" ? "桌面原生引擎" : data.available ? "浏览器 WASM 引擎" : "WASM 未可用",
         variation: data.bestmove || "bestmove",
         notation: formatMoveForBook(legal),
         plan: data.available
-          ? `Pikafish WASM 已在浏览器本地接管本手决策，NNUE ${data.nnue ? "已加载" : "状态未知"}。${describePositiveEngineLines(data)}`
+          ? `Pikafish ${data.source === "native" ? "桌面原生引擎" : "WASM"} 已接管本手决策，NNUE ${data.nnue ? "已加载" : "状态未知"}。${describePositiveEngineLines(data)}`
           : "未检测到 Pikafish WASM，已回退本地算法。"
       };
       return legal;
     } catch (error) {
       const isAbort = error.name === "AbortError";
+      console.warn("Pikafish move request failed", {
+        color,
+        level,
+        threads,
+        message: error.message || String(error),
+        stack: error.stack || ""
+      });
       game.bookInfo = {
         source: "Pikafish WASM 失败",
         family: isAbort ? "WASM 超时" : "WASM 异常",
@@ -4046,6 +4121,9 @@
 
   function chooseSearchFallbackMove(color, moves, level) {
     const config = CLIENT_FALLBACK_CONFIG[level] || CLIENT_FALLBACK_CONFIG.normal;
+    const previousPikafishInfo = game.bookInfo && /Pikafish/.test(game.bookInfo.source || "")
+      ? { ...game.bookInfo }
+      : null;
     const immediateMate = findImmediateMateMove(game.board, color, moves);
     if (immediateMate) {
       game.bookInfo = {
@@ -4064,7 +4142,7 @@
       family: "Alpha-Beta 自主计算",
       variation: "本地 AI 计算",
       notation: formatMoveForBook(move),
-      plan: `${COLOR_NAMES[color]}已在浏览器本地完成迭代加深搜索，评分 ${Math.round(result.score || 0)}。这是 Pikafish WASM 缺失时的兜底。`
+      plan: `${COLOR_NAMES[color]}已在浏览器本地完成迭代加深搜索，评分 ${Math.round(result.score || 0)}。这是 Pikafish WASM 缺失时的兜底。${previousPikafishInfo ? `Pikafish 失败原因：${previousPikafishInfo.family}，${previousPikafishInfo.variation}。` : ""}`
     };
     return move;
   }

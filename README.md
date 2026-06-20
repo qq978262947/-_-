@@ -31,6 +31,38 @@ http://localhost:5178
 
 也可以直接打开 `index.html`。页面在 `file://` 场景下会自动连接 `http://localhost:5178` 的服务端 API；但仍然需要先运行 `npm start`，否则 Pikafish、玩家对练房间和指导功能无法工作。
 
+## 桌面版：Windows / macOS
+
+项目支持 Electron 桌面版。桌面版启动时会在本机开启一个仅供应用使用的本地服务，并优先调用随应用打包的原生 Pikafish：
+
+```bash
+npm install
+npm run desktop
+```
+
+桌面版打包：
+
+```bash
+npm run dist:mac
+npm run dist:win
+```
+
+macOS 当前仓库内置的是 Apple Silicon/arm64 版 Pikafish：
+
+```text
+engines/pikafish/pikafish
+engines/pikafish/pikafish.nnue
+```
+
+Windows 版需要在打包前放入：
+
+```text
+engines/pikafish/pikafish.exe
+engines/pikafish/pikafish.nnue
+```
+
+也可以直接在 GitHub Actions 里运行 `Desktop Release` 工作流；Windows Runner 会自动编译 `pikafish.exe` 并生成 Windows 安装包/便携包，macOS Runner 会生成 macOS arm64 的 dmg/zip。
+
 ## 玩家对练
 
 1. 一名玩家点击“玩家对练”并创建房间或发起 30 秒匹配。
