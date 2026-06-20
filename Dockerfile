@@ -13,7 +13,7 @@ FROM node:20-bookworm-slim
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=5178
+ENV PORT=10000
 
 COPY package.json ./
 COPY README.md LICENSE ./
@@ -25,6 +25,6 @@ COPY --from=pikafish-builder /tmp/pikafish/src/pikafish ./engines/pikafish/pikaf
 
 RUN chmod +x ./engines/pikafish/pikafish
 
-EXPOSE 5178
+EXPOSE 10000
 
 CMD ["node", "server.js"]
