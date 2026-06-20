@@ -716,7 +716,7 @@ function runPikafish(options) {
 async function handleApi(req, res, pathname, query) {
   cleanupRooms();
 
-  if (req.method === "GET" && pathname === "/healthz") {
+  if ((req.method === "GET" || req.method === "HEAD") && pathname === "/healthz") {
     sendJson(res, 200, {
       ok: true,
       rooms: ROOMS.size
