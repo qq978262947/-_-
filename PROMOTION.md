@@ -6,6 +6,7 @@
 
 ## 配图
 
+- 主推广图：`assets/promotion-desktop-board-main.jpeg`
 - 2K 桌面视口截图：`assets/promotion-desktop-2k-board.png`
 - 手机视口截图：`assets/promotion-mobile-board.png`
 
@@ -117,6 +118,41 @@ https://xianqi-mini-program.onrender.com
 
 ## 发布执行版
 
+### 正式发布长文案
+
+标题：
+
+基础功能免费、无需填写任何信息：推荐一款以顶尖 AI 水准为目标的象棋练棋辅助工具
+
+正文：
+
+推荐一款网页端象棋练棋辅助工具，适合想系统练开局、看棋谱变化、拆解对局、提升实战应对能力的棋友使用。它不是普通“下棋页面”，核心目标只有一个：辅助棋手不断向最顶尖 AI 水准靠近。
+
+工具基础功能免费，打开网页即可使用，无需下载安装，也无需填写任何个人信息。最顶尖 AI 辅助能力会作为核心收费来源，其他练棋、复盘、棋谱招训练等基础能力保持轻量、直接、可用。
+
+它的训练思路不是一开始就把所有下法都交给纯 AI，而是先模拟人类棋手行为，以棋谱下法、职业高频下法和常见变化为主。前期重点优先覆盖最常见的谱招、布局分支和人类棋手高频应法，让用户先具备快速识别常见局面、攻破常见走法、形成高胜率应对的能力。随后再逐步过渡到纯 AI 下法和更高强度引擎招法，最终做到从人类谱招到 AI 招法的全覆盖。
+
+目前重点能力：
+
+- 棋谱招优先训练，适合反复练开局和常见变化
+- 模拟人类棋手常见下法，先攻破高频谱招和常见应对
+- 支持 Pikafish AI 指导，辅助分析候选下法
+- 支持多路线推演，方便比较不同变化的优劣
+- 支持人机对练、玩家对练和双人练习
+- 对局结束后可以复盘、回看历史棋谱
+- 手机端和桌面端都能完整显示棋盘
+- 多套棋盘风格，适合长期练棋使用
+
+Pikafish 是目前公开表现最强的开源中国象棋 AI 引擎之一，也是当前象棋 AI 领域最具代表性的高性能引擎。它基于 Stockfish 的先进搜索框架发展而来，面向中国象棋规则进行了深度适配，并结合 NNUE 神经网络评估体系，在局面判断、候选着法搜索、残局计算和实战对抗中表现出极高强度。Pikafish 采用 UCI 协议，便于接入各类象棋 GUI、分析工具、训练系统和自研项目，适合用于棋局分析、AI 对弈、复盘拆解、招法推荐和棋力训练等场景。官方项目也明确将其定位为 “free and strong UCI xiangqi engine”，并说明其源自 Stockfish，用于分析象棋局面并计算最优着法。
+
+体验地址：
+https://xianqi-mini-program.onrender.com
+
+开源代码：
+https://github.com/qq978262947/-_-
+
+配图：`assets/promotion-desktop-board-main.jpeg`
+
 ### 第一波发布顺序
 
 1. 微信朋友圈和象棋微信群：先找熟人棋友试用，收集反馈。
@@ -133,7 +169,7 @@ https://xianqi-mini-program.onrender.com
 手机端棋盘也适配了，推荐棋友直接体验：
 https://xianqi-mini-program.onrender.com
 
-配图：`assets/promotion-mobile-board.png`
+配图：`assets/promotion-desktop-board-main.jpeg`
 
 ### 象棋微信群文案
 
@@ -187,7 +223,7 @@ https://github.com/qq978262947/-_-
 
 Pikafish 是目前公开表现最强的开源中国象棋 AI 引擎之一，也是当前象棋 AI 领域最具代表性的高性能引擎。它基于 Stockfish 的先进搜索框架发展而来，面向中国象棋规则进行了深度适配，并结合 NNUE 神经网络评估体系，在局面判断、候选着法搜索、残局计算和实战对抗中表现出极高强度。Pikafish 采用 UCI 协议，便于接入各类象棋 GUI、分析工具、训练系统和自研项目，适合用于棋局分析、AI 对弈、复盘拆解、招法推荐和棋力训练等场景。
 
-配图：`assets/promotion-desktop-2k-board.png` 或 `assets/promotion-mobile-board.png`
+配图：`assets/promotion-desktop-board-main.jpeg`
 
 ### 知乎标题和正文
 
@@ -245,7 +281,7 @@ https://xianqi-mini-program.onrender.com
 标签：
 #象棋 #中国象棋 #象棋开局 #象棋复盘 #象棋AI #Pikafish #练棋
 
-配图：`assets/promotion-mobile-board.png`
+配图：`assets/promotion-desktop-board-main.jpeg`
 
 ### 抖音/快手口播脚本
 
